@@ -4,7 +4,9 @@
 #### Primavera 2024
 
 ##### Benjamín Oliva-Vázquez 
+
 benjamin.oliva@cide.edu
+
 benjov@ciencias.unam.mx
 
 ## Descipción
