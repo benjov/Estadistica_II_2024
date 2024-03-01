@@ -1,4 +1,4 @@
-# Estadistica II, Primavera de 2021
+# Estadistica II, Primavera de 2024
 # Primeros Códigos. Ejemplo Lanzamiento de una moneda
 
 #****************************************************************************************
