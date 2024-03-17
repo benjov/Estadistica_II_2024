@@ -120,8 +120,8 @@ View(U)
 
 # GRÁFICA
 ggplot(data = U, aes( x = Tiempo, y = SU_t) ) + 
-  geom_line(size = 0.5, color = "darkblue") +
-  #geom_point(size = 1.0, color = "darkblue") + 
+  geom_line(linewidth = 0.5, color = "darkblue") +
+  #geom_point(linewidth = 1.0, color = "darkblue") + 
   #theme_bw() + 
   theme(legend.position = "none") +
   theme(legend.title = element_blank()) +
