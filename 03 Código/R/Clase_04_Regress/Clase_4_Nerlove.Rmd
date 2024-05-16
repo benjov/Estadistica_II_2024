@@ -1,5 +1,5 @@
 ---
-title: "Regresión Lineal"
+title: "Regresión Lineal - Ejemplo de Nerlove"
 output:
   html_document: default
   pdf_document: default

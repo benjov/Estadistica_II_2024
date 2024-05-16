@@ -1,0 +1,701 @@
+# ESTADÍSTICA NO PARAMÉTRICA Parte I
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# #  Corre esta celda sólo una vez, una vez ejecutada reinicia los kernels, comenta esta instrucción y ejecuta a partir 
+
+# #  de la siguiente línea:
+
+# #!pip install <Biblioteca>
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# import pandas as pd 
+
+# import numpy as np 
+
+# import math
+
+# from matplotlib import pyplot as plt 
+
+# import statsmodels.api as sm 
+
+# from IPython.display import Image # Para imagénes
+
+# import plotly.express as px
+
+# import plotly.graph_objects as go
+
+# import xml.etree.ElementTree as ET
+
+# from xml.etree.ElementTree import parse
+
+# import json
+
+# import seaborn as sns
+
+# import scipy.stats as st
+
+# 
+
+# # Omiting WARNINGS
+
+# import warnings
+
+# warnings.filterwarnings('ignore')
+
+```
+
+# Busquemos Datos
+
+### Importador de datos de Precios de Gasolinas en Estaciones de Servicio
+
+Los datos fueron tomados de: https://datos.gob.mx/busca/dataset/estaciones-de-servicio-gasolineras-y-precios-finales-de-gasolina-y-diesel
+
+Nota al margen, tenemos una herramienta en desarrollo disponible en: https://analyticsboutique.github.io/dashboard-simplificado/
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # 
+
+# tree = ET.parse('places.xml')
+
+# root = tree.getroot()
+
+# #root
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Extraemos los elementos del XML
+
+# ID = []
+
+# name = []
+
+# cre_id = []
+
+# lng = []
+
+# lat = []
+
+# 
+
+# for item in range (0,len(root)):
+
+#     ID.append(root[item].attrib['place_id'])
+
+#     name.append(root[item][0].text)
+
+#     cre_id.append(root[item][1].text)
+
+#     lng.append(root[item][2][0].text)
+
+#     lat.append(root[item][2][1].text)
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Imprime el número de registros
+
+# print(len(ID),len(name),len(cre_id),len(lat),len(lng))
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Convertimos a DATAFRAME
+
+# Gasolinerias = pd.DataFrame({ 'ID' : ID, 'name' : name, 'cre_id' : cre_id, 'lat' : lat, 'lng' : lng })
+
+# Gasolinerias.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # 
+
+# tree = ET.parse('prices.xml')
+
+# root = tree.getroot()
+
+# #root
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Extraemos los elementos del XML
+
+# ID = []
+
+# tipo = []
+
+# gas_price = []
+
+# 
+
+# for item in range (0,len(root)):
+
+#     ID.append(root[item].attrib['place_id'])
+
+#     tipo.append(root[item][0].attrib['type']) 
+
+#     gas_price.append(root[item].findtext('gas_price'))
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Imprime el número de registros
+
+# print(len(ID),len(tipo),len(gas_price))
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Convertimos a DATAFRAME
+
+# Precios = pd.DataFrame({ 'ID' : ID, 'tipo' : tipo, 'gas_price' : gas_price })
+
+# Precios.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Selecccionamos por tipo de gasolina
+
+# Precios_regular = Precios[Precios['tipo'] == 'regular']
+
+# Precios_regular.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Selecccionamos por tipo de gasolina
+
+# Precios_premium = Precios[Precios['tipo'] == 'premium']
+
+# Precios_premium.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Selecccionamos por tipo de gasolina
+
+# Precios_diesel = Precios[Precios['tipo'] == 'diesel']
+
+# Precios_diesel.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Juntamos datos:
+
+# 
+
+# # Regular
+
+# Gasolinerias_Precios = Gasolinerias
+
+# 
+
+# Gasolinerias_Precios = pd.merge(Gasolinerias_Precios, Precios_regular, on = 'ID', how='outer')
+
+# 
+
+# Gasolinerias_Precios = Gasolinerias_Precios.rename(columns={'gas_price': 'regular'})
+
+# 
+
+# Gasolinerias_Precios = Gasolinerias_Precios[['ID', 'name', 'cre_id', 'lat', 'lng', 'regular']]
+
+# 
+
+# Gasolinerias_Precios.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Premium
+
+# Gasolinerias_Precios = pd.merge(Gasolinerias_Precios, Precios_premium, on = 'ID', how='outer')
+
+# 
+
+# Gasolinerias_Precios = Gasolinerias_Precios.rename(columns={'gas_price': 'premium'})
+
+# 
+
+# Gasolinerias_Precios = Gasolinerias_Precios[['ID', 'name', 'cre_id', 'lat', 'lng', 'regular', 'premium']]
+
+# 
+
+# Gasolinerias_Precios.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Regular
+
+# Gasolinerias_Precios = pd.merge(Gasolinerias_Precios, Precios_diesel, on = 'ID', how='outer')
+
+# 
+
+# Gasolinerias_Precios = Gasolinerias_Precios.rename(columns={'gas_price': 'diesel'})
+
+# 
+
+# Gasolinerias_Precios = Gasolinerias_Precios[['ID', 'name', 'cre_id', 'lat', 'lng', 'regular', 'premium', 'diesel']]
+
+# 
+
+# Gasolinerias_Precios.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Is NA's y revisar
+
+# 
+
+# Gasolinerias_Precios[Gasolinerias_Precios['cre_id'].isnull()]
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Datos Finales:
+
+# Gasolinerias_Precios.to_csv('Gasolinerias_Precios.csv', encoding = 'UTF-8', index = False)
+
+```
+
+# Kernel
+
+### Epanechnikov
+
+$$K(t) = \frac{3}{4}(1 - t^2) \text{ con } |t| < 1$$
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Soporte
+
+# t = np.arange(start = -1, stop = 1.1, step = 0.1)
+
+# 
+
+# # Kernel
+
+# K = (3/4)*(1 - t**2)
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Gráfica Kernel
+
+# 
+
+# fig = go.Figure()
+
+# 
+
+# fig.add_trace( go.Scatter( x = t, y = K, name = 'Epanechnikov', line_color = 'darkblue' ) )
+
+# 
+
+# fig.update_layout( template = 'plotly_white', # "plotly", "plotly_white", "ggplot2", "seaborn", "simple_white", "none"
+
+#                   barmode = 'overlay', 
+
+#                   title = { 'text': 'Kernel Epanechnikov',
+
+#                            'y':0.9, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'}, 
+
+#                   font_family = 'Times New Roman', font_size = 14, font_color = 'black')
+
+# 
+
+# fig.update_layout( autosize = False, width = 500, height = 500 )
+
+# 
+
+# fig.show()
+
+```
+
+### Gauss:
+
+$$K(t) = \frac{1}{\sqrt{2 \pi}} e^{-\frac{1}{2} t^2} \text{ con } |t| < \infty$$
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Soporte
+
+# t = np.arange(start = -3, stop = 3.1, step = 0.1)
+
+# 
+
+# # Kernel
+
+# K = (1/(2*(math.pi)))*(math.e**(-(1/2)*t**2))
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Gráfica Kernel
+
+# 
+
+# fig = go.Figure()
+
+# 
+
+# fig.add_trace( go.Scatter( x = t, y = K, name = 'Gauss', line_color = 'darkblue' ) )
+
+# 
+
+# fig.update_layout( template = 'plotly_white', # "plotly", "plotly_white", "ggplot2", "seaborn", "simple_white", "none"
+
+#                   barmode = 'overlay', 
+
+#                   title = { 'text': 'Kernel Gauss',
+
+#                            'y':0.9, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'}, 
+
+#                   font_family = 'Times New Roman', font_size = 14, font_color = 'black')
+
+# 
+
+# fig.update_layout( autosize = False, width = 500, height = 500 )
+
+# 
+
+# fig.show()
+
+```
+
+### Aplicación de Kernel Gaussiano
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Revisemos los datos:
+
+# Gasolinerias_Precios.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # ¿Qué tipo de datos tenemos?
+
+# Gasolinerias_Precios.dtypes
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Seleccionemos tipo de combustible
+
+# Combustible = 'regular' # regular, premium, diesel
+
+# 
+
+# # Seleccionamos GRID:
+
+# grid = np.linspace(10, 30, 200) # valor_min, valor_max, particiones
+
+# 
+
+# # Defining X-Variable
+
+# X = Gasolinerias_Precios[Combustible].astype(float).dropna().to_numpy()
+
+# 
+
+# # Start Plot
+
+# fig, ax = plt.subplots(figsize = (15, 8))
+
+# 
+
+# # plot the raw data
+
+# _ = sns.rugplot(X)
+
+# 
+
+# # loop over several example bandwidths
+
+# for bandwidth in [0.1, 0.5, 1]:
+
+#     
+
+#     # calculate the kde
+
+#     kde = st.gaussian_kde(X,bw_method = bandwidth)
+
+# 
+
+#     # evaluate the precomputed kde for plotting on our grid
+
+#     ax.plot(grid, kde.evaluate(grid), label = 'bandwidth = {0}'.format(bandwidth))
+
+# 
+
+# # a histogram for comparison
+
+# #_ = ax.hist(X, bins = 30, alpha = 0.2, normed = True)
+
+# 
+
+# # Tidy up plot
+
+# ax.legend(loc='upper left', fontsize = 15)
+
+# _ = plt.xlabel('Precio MXN', fontsize = 15)
+
+# _ = plt.ylabel('Probability Density', fontsize = 15)
+
+# _ = ax.set_title('Gráfica de densidad de gasolina tipo {}'.format(Combustible), fontsize = 20)
+
+```
+
+## Prueba Kolmogorov-Smirnov para 2 samples
+
+Esta es una prueba para la hipótesis nula de que se extraen 2 muestras independientes de la misma distribución continua. La hipótesis alternativa puede ser "bilateral", "menor" o "mayor". Alterntivamente:
+
+\begin{eqnarray*}
+    H_0 & : & \text{Las distribuciones son iguales} \\
+    H_1 & : & \text{Las distribuciones son distintas}
+\end{eqnarray*}
+
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Retomemos nuestro Data Frame de Precios de gasolinas
+
+# 
+
+# Gasolinerias_Precios.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Seleccionamos 2 muestras con remplazo
+
+# 
+
+# Sample_1 = Gasolinerias_Precios['regular'].dropna().sample(n = 50, replace = True)
+
+# Sample_1.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# #
+
+# Sample_2 = Gasolinerias_Precios['regular'].dropna().sample(n = 50, replace = True)
+
+# Sample_2.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Realizamos la prueba
+
+# 
+
+# st.ks_2samp(Sample_1, Sample_2, alternative = 'two-sided') # two-sided’, ‘less’, ‘greater’
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Seleccionamos 2 muestras con remplazo pero para zonas del país
+
+# 
+
+# # NOROESTE
+
+# Sample_NO = Gasolinerias_Precios[(Gasolinerias_Precios['lat'].astype(float) > 28) & (Gasolinerias_Precios['lng'].astype(float) < -104)]['regular'].dropna()
+
+# Sample_NO.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # PENÍNSULA
+
+# Sample_PE = Gasolinerias_Precios[Gasolinerias_Precios['lng'].astype(float) > -91]['regular'].dropna()
+
+# Sample_PE.head()
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# # Realizamos la prueba
+
+# 
+
+# st.ks_2samp(Sample_NO, Sample_PE, alternative = 'two-sided') # two-sided’, ‘less’, ‘greater’
+
+```
+
+```{r}
+
+# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+
+# Original Python code:
+
+# 
+
+```
