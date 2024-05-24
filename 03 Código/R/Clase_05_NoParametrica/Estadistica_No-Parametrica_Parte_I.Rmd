@@ -1,58 +1,39 @@
-# ESTADÍSTICA NO PARAMÉTRICA Parte I
+---
+title: "ESTADÍSTICA NO PARAMÉTRICA Parte I"
+output:
+  html_document: default
+  pdf_document: default
+---
 
-```{r}
+```{r setup, include = FALSE}
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# #  Corre esta celda sólo una vez, una vez ejecutada reinicia los kernels, comenta esta instrucción y ejecuta a partir 
-
-# #  de la siguiente línea:
-
-# #!pip install <Biblioteca>
+knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
-```{r}
-
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# import pandas as pd 
-
-# import numpy as np 
-
-# import math
-
-# from matplotlib import pyplot as plt 
-
-# import statsmodels.api as sm 
-
-# from IPython.display import Image # Para imagénes
-
-# import plotly.express as px
-
-# import plotly.graph_objects as go
-
-# import xml.etree.ElementTree as ET
-
-# from xml.etree.ElementTree import parse
-
-# import json
-
-# import seaborn as sns
-
-# import scipy.stats as st
-
-# 
-
-# # Omiting WARNINGS
-
-# import warnings
-
-# warnings.filterwarnings('ignore')
+### Dependencies
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+#install.packages('reticulate')
+#CUANDO: Do you want to install from sources the package which needs compilation? (Yes/no/cancel) Y
+library(reticulate) 
+library(stats)
+library(stats4)
+library(ggplot2)
+library(lubridate)
+library(XML)
+library(jsonlite)
+library(httr)
+library(ggplot2)
+library(ggpubr)
+library(plotly)
+library(scales)
+library(dplyr)
+#install.packages('ggthemes')
+library(ggthemes)
+library(httr)
+library(xml2)
+library(MASS)
 
 ```
 
@@ -62,297 +43,194 @@
 
 Los datos fueron tomados de: https://datos.gob.mx/busca/dataset/estaciones-de-servicio-gasolineras-y-precios-finales-de-gasolina-y-diesel
 
-Nota al margen, tenemos una herramienta en desarrollo disponible en: https://analyticsboutique.github.io/dashboard-simplificado/
+Nota al margen, tenemos una herramienta en desarrollo disponible en: https://analyticsboutique.github.io/Precios-en-EDS/
 
 ```{r}
+# Cargar XML desde una URL
+var_url <- 'https://bit.ly/2V1Z3sm'
+response <- GET(var_url)
+xml_content <- content(response, as = "text", encoding = "UTF-8")
+tree <- read_xml(xml_content)
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+# Si quisieras cargar un archivo local:
+# tree <- read_xml('places.xml')
 
-# Original Python code:
+root <- xml_root(tree)
 
-# # 
+#root
+```
 
-# tree = ET.parse('places.xml')
+```{r}
+# Extraemos los elementos del XML
+ID <- c()
+name <- c()
+cre_id <- c()
+lng <- c()
+lat <- c()
 
-# root = tree.getroot()
+items <- xml_find_all(root, ".//place")  
 
-# #root
+for (item in items) {
+    ID <- c(ID, xml_attr(item, "place_id"))
+    name <- c(name, xml_text(xml_find_first(item, ".//name")))
+    cre_id <- c(cre_id, xml_text(xml_find_first(item, ".//cre_id")))
+    lng <- c(lng, xml_text(xml_find_first(item, ".//location/x")))
+    lat <- c(lat, xml_text(xml_find_first(item, ".//location/y")))
+}
 
 ```
 
 ```{r}
+# Imprime el número de registros
+length(ID)
+length(name)
+length(cre_id)
+length(lat)
+length(lng)
+```
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+```{r}
+# Convertimos a DATAFRAME
+Gasolinerias <- data.frame(ID = ID, name = name, cre_id = cre_id, lat = lat, lng = lng)
 
-# Original Python code:
-
-# # Extraemos los elementos del XML
-
-# ID = []
-
-# name = []
-
-# cre_id = []
-
-# lng = []
-
-# lat = []
-
-# 
-
-# for item in range (0,len(root)):
-
-#     ID.append(root[item].attrib['place_id'])
-
-#     name.append(root[item][0].text)
-
-#     cre_id.append(root[item][1].text)
-
-#     lng.append(root[item][2][0].text)
-
-#     lat.append(root[item][2][1].text)
+# Muestra las primeras filas del dataframe
+head(Gasolinerias)
 
 ```
 
 ```{r}
+#
+var_url <- 'https://bit.ly/2JNcTha'
+response <- GET(var_url)
+xml_content <- content(response, as = "text", encoding = "UTF-8")
+tree <- read_xml(xml_content)
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+# Si quisieras cargar un archivo local:
+# tree <- read_xml('prices.xml')
 
-# Original Python code:
+root <- xml_root(tree)
 
-# # Imprime el número de registros
+#root
+```
 
-# print(len(ID),len(name),len(cre_id),len(lat),len(lng))
+```{r}
+# Extraemos los elementos del XML
+ID <- c()
+tipo <- c()
+gas_price <- c()
+
+# Asumiendo que 'place' es el nombre del nodo
+items <- xml_find_all(root, ".//place")
+
+for (item in items) {
+    ID <- c(ID, xml_attr(item, "place_id"))
+    tipo <- c(tipo, xml_attr(xml_children(item)[[1]], "type"))
+    gas_price <- c(gas_price, xml_text(xml_find_first(item, ".//gas_price")))
+}
 
 ```
 
 ```{r}
-
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Convertimos a DATAFRAME
-
-# Gasolinerias = pd.DataFrame({ 'ID' : ID, 'name' : name, 'cre_id' : cre_id, 'lat' : lat, 'lng' : lng })
-
-# Gasolinerias.head()
+# Imprime el número de registros
+print(length(ID))
+print(length(tipo))
+print(length(gas_price))
 
 ```
 
 ```{r}
+# Convertimos a DATAFRAME
+Precios <- data.frame(ID = ID, tipo = tipo, gas_price = gas_price)
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+# Muestra las primeras filas del dataframe
+head(Precios)
+```
 
-# Original Python code:
+```{r}
+# Seleccionamos por tipo de gasolina
+Precios_regular <- Precios[Precios$tipo == 'regular', ]
 
-# # 
-
-# tree = ET.parse('prices.xml')
-
-# root = tree.getroot()
-
-# #root
+# Muestra las primeras filas del dataframe
+head(Precios_regular)
 
 ```
 
 ```{r}
+# Seleccionamos por tipo de gasolina
+Precios_premium <- Precios[Precios$tipo == 'premium', ]
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Extraemos los elementos del XML
-
-# ID = []
-
-# tipo = []
-
-# gas_price = []
-
-# 
-
-# for item in range (0,len(root)):
-
-#     ID.append(root[item].attrib['place_id'])
-
-#     tipo.append(root[item][0].attrib['type']) 
-
-#     gas_price.append(root[item].findtext('gas_price'))
+# Muestra las primeras filas del dataframe
+head(Precios_premium)
 
 ```
 
 ```{r}
+# Seleccionamos por tipo de gasolina
+Precios_diesel <- Precios[Precios$tipo == 'diesel', ]
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Imprime el número de registros
-
-# print(len(ID),len(tipo),len(gas_price))
+# Muestra las primeras filas del dataframe
+head(Precios_diesel)
 
 ```
 
 ```{r}
+# Juntamos datos:
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+# Regular
+Gasolinerias_Precios <- Gasolinerias
 
-# Original Python code:
+Gasolinerias_Precios <- merge(Gasolinerias_Precios, Precios_regular, by = 'ID', all = TRUE)
 
-# # Convertimos a DATAFRAME
+# Juntamos datos:
 
-# Precios = pd.DataFrame({ 'ID' : ID, 'tipo' : tipo, 'gas_price' : gas_price })
+Gasolinerias_Precios <- Gasolinerias_Precios %>%
+  rename(regular = gas_price) 
 
-# Precios.head()
+Gasolinerias_Precios <- Gasolinerias_Precios[ , c("ID", "name", "cre_id", "lat", "lng", "regular")]
 
-```
-
-```{r}
-
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Selecccionamos por tipo de gasolina
-
-# Precios_regular = Precios[Precios['tipo'] == 'regular']
-
-# Precios_regular.head()
+# Muestra las primeras filas del dataframe
+head(Gasolinerias_Precios)
 
 ```
 
 ```{r}
+# Premium
+Gasolinerias_Precios <- merge(Gasolinerias_Precios, Precios_premium, by = 'ID', all = TRUE)
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+Gasolinerias_Precios <- Gasolinerias_Precios %>%
+  rename(premium = gas_price) 
 
-# Original Python code:
+Gasolinerias_Precios <- Gasolinerias_Precios[ , c("ID", "name", "cre_id", "lat", "lng", "regular", "premium")]
 
-# # Selecccionamos por tipo de gasolina
-
-# Precios_premium = Precios[Precios['tipo'] == 'premium']
-
-# Precios_premium.head()
-
-```
-
-```{r}
-
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Selecccionamos por tipo de gasolina
-
-# Precios_diesel = Precios[Precios['tipo'] == 'diesel']
-
-# Precios_diesel.head()
+# Muestra las primeras filas del dataframe
+head(Gasolinerias_Precios)
 
 ```
 
 ```{r}
+# Diesel
+Gasolinerias_Precios <- merge(Gasolinerias_Precios, Precios_diesel, by = 'ID', all = TRUE)
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+Gasolinerias_Precios <- Gasolinerias_Precios %>%
+  rename(diesel = gas_price)
 
-# Original Python code:
+Gasolinerias_Precios <- Gasolinerias_Precios[ , c("ID", "name", "cre_id", "lat", "lng", "regular", "premium", "diesel")]
 
-# # Juntamos datos:
-
-# 
-
-# # Regular
-
-# Gasolinerias_Precios = Gasolinerias
-
-# 
-
-# Gasolinerias_Precios = pd.merge(Gasolinerias_Precios, Precios_regular, on = 'ID', how='outer')
-
-# 
-
-# Gasolinerias_Precios = Gasolinerias_Precios.rename(columns={'gas_price': 'regular'})
-
-# 
-
-# Gasolinerias_Precios = Gasolinerias_Precios[['ID', 'name', 'cre_id', 'lat', 'lng', 'regular']]
-
-# 
-
-# Gasolinerias_Precios.head()
+# Muestra las primeras filas del dataframe
+head(Gasolinerias_Precios)
 
 ```
 
 ```{r}
+# Verificar valores NA y revisar
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Premium
-
-# Gasolinerias_Precios = pd.merge(Gasolinerias_Precios, Precios_premium, on = 'ID', how='outer')
-
-# 
-
-# Gasolinerias_Precios = Gasolinerias_Precios.rename(columns={'gas_price': 'premium'})
-
-# 
-
-# Gasolinerias_Precios = Gasolinerias_Precios[['ID', 'name', 'cre_id', 'lat', 'lng', 'regular', 'premium']]
-
-# 
-
-# Gasolinerias_Precios.head()
+Gasolinerias_Precios[is.na(Gasolinerias_Precios$ID), ]
 
 ```
 
 ```{r}
-
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Regular
-
-# Gasolinerias_Precios = pd.merge(Gasolinerias_Precios, Precios_diesel, on = 'ID', how='outer')
-
-# 
-
-# Gasolinerias_Precios = Gasolinerias_Precios.rename(columns={'gas_price': 'diesel'})
-
-# 
-
-# Gasolinerias_Precios = Gasolinerias_Precios[['ID', 'name', 'cre_id', 'lat', 'lng', 'regular', 'premium', 'diesel']]
-
-# 
-
-# Gasolinerias_Precios.head()
-
-```
-
-```{r}
-
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Is NA's y revisar
-
-# 
-
-# Gasolinerias_Precios[Gasolinerias_Precios['cre_id'].isnull()]
-
-```
-
-```{r}
-
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Datos Finales:
-
-# Gasolinerias_Precios.to_csv('Gasolinerias_Precios.csv', encoding = 'UTF-8', index = False)
+# Datos Finales:
+write.csv(Gasolinerias_Precios, 'Gasolinerias_Precios.csv', row.names = FALSE, fileEncoding = 'UTF-8')
 
 ```
 
@@ -363,58 +241,33 @@ Nota al margen, tenemos una herramienta en desarrollo disponible en: https://ana
 $$K(t) = \frac{3}{4}(1 - t^2) \text{ con } |t| < 1$$
 
 ```{r}
+# Soporte
+t <- seq(from = -1.0, to = 1.0, by = 0.1)
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Soporte
-
-# t = np.arange(start = -1, stop = 1.1, step = 0.1)
-
-# 
-
-# # Kernel
-
-# K = (3/4)*(1 - t**2)
+# Kernel
+K <- (3/4) * (1 - t^2)
 
 ```
 
 ```{r}
+# Datos
+data <- data.frame(t = t, K = K)
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+# Gráfica Kernel
+ggplot(data, aes(x = t, y = K)) +
+  geom_line(color = 'darkblue') +
+  labs(title = 'Kernel Epanechnikov', x = 't', y = 'K') +
+  theme_minimal(base_family = 'Times New Roman') +
+  theme(
+    plot.title = element_text(hjust = 0.5, vjust = 1, size = 14, color = 'black'),
+    axis.title = element_text(size = 14, color = 'black'),
+    axis.text = element_text(size = 12, color = 'black')
+  ) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(aspect.ratio = 1)
 
-# Original Python code:
-
-# # Gráfica Kernel
-
-# 
-
-# fig = go.Figure()
-
-# 
-
-# fig.add_trace( go.Scatter( x = t, y = K, name = 'Epanechnikov', line_color = 'darkblue' ) )
-
-# 
-
-# fig.update_layout( template = 'plotly_white', # "plotly", "plotly_white", "ggplot2", "seaborn", "simple_white", "none"
-
-#                   barmode = 'overlay', 
-
-#                   title = { 'text': 'Kernel Epanechnikov',
-
-#                            'y':0.9, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'}, 
-
-#                   font_family = 'Times New Roman', font_size = 14, font_color = 'black')
-
-# 
-
-# fig.update_layout( autosize = False, width = 500, height = 500 )
-
-# 
-
-# fig.show()
+# Ajustar tamaño de la gráfica
+ggsave("Kernel_Epanechnikov.png", width = 5, height = 5)
 
 ```
 
@@ -423,156 +276,86 @@ $$K(t) = \frac{3}{4}(1 - t^2) \text{ con } |t| < 1$$
 $$K(t) = \frac{1}{\sqrt{2 \pi}} e^{-\frac{1}{2} t^2} \text{ con } |t| < \infty$$
 
 ```{r}
+# Soporte
+t <- seq(from = -3.0, to = 3.0, by = 0.1)
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Soporte
-
-# t = np.arange(start = -3, stop = 3.1, step = 0.1)
-
-# 
-
-# # Kernel
-
-# K = (1/(2*(math.pi)))*(math.e**(-(1/2)*t**2))
+# Kernel
+K <- (1 / (2 * pi)) * (exp(-0.5 * t^2))
 
 ```
 
 ```{r}
+# Datos
+data <- data.frame(t = t, K = K)
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+# Gráfica Kernel
+ggplot(data, aes(x = t, y = K)) +
+  geom_line(color = 'darkblue') +
+  labs(title = 'Kernel Gauss', x = 't', y = 'K') +
+  theme_minimal(base_family = 'Times New Roman') +
+  theme(
+    plot.title = element_text(hjust = 0.5, vjust = 1, size = 14, color = 'black'),
+    axis.title = element_text(size = 14, color = 'black'),
+    axis.text = element_text(size = 12, color = 'black')
+  ) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(aspect.ratio = 1)
 
-# Original Python code:
-
-# # Gráfica Kernel
-
-# 
-
-# fig = go.Figure()
-
-# 
-
-# fig.add_trace( go.Scatter( x = t, y = K, name = 'Gauss', line_color = 'darkblue' ) )
-
-# 
-
-# fig.update_layout( template = 'plotly_white', # "plotly", "plotly_white", "ggplot2", "seaborn", "simple_white", "none"
-
-#                   barmode = 'overlay', 
-
-#                   title = { 'text': 'Kernel Gauss',
-
-#                            'y':0.9, 'x':0.5, 'xanchor': 'center', 'yanchor': 'top'}, 
-
-#                   font_family = 'Times New Roman', font_size = 14, font_color = 'black')
-
-# 
-
-# fig.update_layout( autosize = False, width = 500, height = 500 )
-
-# 
-
-# fig.show()
+# Ajustar tamaño de la gráfica
+ggsave("Kernel_Gauss.png", width = 5, height = 5)
 
 ```
 
 ### Aplicación de Kernel Gaussiano
 
 ```{r}
-
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Revisemos los datos:
-
-# Gasolinerias_Precios.head()
+# Revisemos los datos:
+head(Gasolinerias_Precios)
 
 ```
 
 ```{r}
-
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # ¿Qué tipo de datos tenemos?
-
-# Gasolinerias_Precios.dtypes
+# ¿Qué tipo de datos tenemos?
+str(Gasolinerias_Precios)
 
 ```
 
 ```{r}
+# Seleccionemos tipo de combustible
+Combustible <- 'regular' # regular, premium, diesel
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+# Seleccionamos GRID:
+grid <- seq(15, 30, length.out = 200) # valor_min, valor_max, particiones
 
-# Original Python code:
+# Definir la variable X
+X <- Gasolinerias_Precios[ , c(Combustible) ] %>%
+  as.numeric()
 
-# # Seleccionemos tipo de combustible
+# Empezar la gráfica
+plot_data <- data.frame(X) %>%
+  filter( X > 15 )
 
-# Combustible = 'regular' # regular, premium, diesel
+X <- plot_data$X
 
-# 
+# Crear la gráfica base
+p <- ggplot(plot_data, aes(x = X)) +
+  geom_rug() +
+  labs(title = paste('Gráfica de densidad de gasolina tipo', Combustible),
+       x = 'Precio MXN',
+       y = 'Probability Density') +
+  theme_minimal(base_size = 15)
 
-# # Seleccionamos GRID:
+# Añadir diferentes anchos de banda
+for (bandwidth in c(0.1, 0.5, 1)) {
+  kde <- density(X, bw = bandwidth)
+  kde_data <- data.frame(x = kde$x, y = kde$y)
+  p <- p + geom_line(data = kde_data, aes(x = x, y = y), color = 10*bandwidth) +
+    annotate("text", x = max(grid), y = max(kde$y), label = paste('bw =', bandwidth), 
+             size = 3, color = 10*bandwidth)
+}
 
-# grid = np.linspace(10, 30, 200) # valor_min, valor_max, particiones
-
-# 
-
-# # Defining X-Variable
-
-# X = Gasolinerias_Precios[Combustible].astype(float).dropna().to_numpy()
-
-# 
-
-# # Start Plot
-
-# fig, ax = plt.subplots(figsize = (15, 8))
-
-# 
-
-# # plot the raw data
-
-# _ = sns.rugplot(X)
-
-# 
-
-# # loop over several example bandwidths
-
-# for bandwidth in [0.1, 0.5, 1]:
-
-#     
-
-#     # calculate the kde
-
-#     kde = st.gaussian_kde(X,bw_method = bandwidth)
-
-# 
-
-#     # evaluate the precomputed kde for plotting on our grid
-
-#     ax.plot(grid, kde.evaluate(grid), label = 'bandwidth = {0}'.format(bandwidth))
-
-# 
-
-# # a histogram for comparison
-
-# #_ = ax.hist(X, bins = 30, alpha = 0.2, normed = True)
-
-# 
-
-# # Tidy up plot
-
-# ax.legend(loc='upper left', fontsize = 15)
-
-# _ = plt.xlabel('Precio MXN', fontsize = 15)
-
-# _ = plt.ylabel('Probability Density', fontsize = 15)
-
-# _ = ax.set_title('Gráfica de densidad de gasolina tipo {}'.format(Combustible), fontsize = 20)
+# Mostrar la gráfica
+p
 
 ```
 
@@ -585,117 +368,105 @@ Esta es una prueba para la hipótesis nula de que se extraen 2 muestras independ
     H_1 & : & \text{Las distribuciones son distintas}
 \end{eqnarray*}
 
-
 ```{r}
+# Retomemos nuestro Data Frame de Precios de gasolinas
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Retomemos nuestro Data Frame de Precios de gasolinas
-
-# 
-
-# Gasolinerias_Precios.head()
+head(Gasolinerias_Precios)
 
 ```
 
 ```{r}
+# Seleccionamos 2 muestras con reemplazo
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+set.seed(123)  # Para reproducibilidad
+Sample_1 <- sample(na.omit(Gasolinerias_Precios$regular), size = 50, replace = TRUE)
 
-# Original Python code:
-
-# # Seleccionamos 2 muestras con remplazo
-
-# 
-
-# Sample_1 = Gasolinerias_Precios['regular'].dropna().sample(n = 50, replace = True)
-
-# Sample_1.head()
+# Mostrar las primeras filas de la muestra
+head(Sample_1)
 
 ```
 
 ```{r}
+# Seleccionamos otra muestra con reemplazo
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+set.seed(321)  # Para reproducibilidad
+Sample_2 <- sample(na.omit(Gasolinerias_Precios$regular), size = 50, replace = TRUE)
 
-# Original Python code:
-
-# #
-
-# Sample_2 = Gasolinerias_Precios['regular'].dropna().sample(n = 50, replace = True)
-
-# Sample_2.head()
+# Mostrar las primeras filas de la muestra
+head(Sample_2)
 
 ```
 
 ```{r}
+# Asegurarse de que las muestras sean vectores numéricos
+Sample_1 <- as.numeric(Sample_1)
+Sample_2 <- as.numeric(Sample_2)
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+# Realizamos la prueba
 
-# Original Python code:
-
-# # Realizamos la prueba
-
-# 
-
-# st.ks_2samp(Sample_1, Sample_2, alternative = 'two-sided') # two-sided’, ‘less’, ‘greater’
+ks.test(Sample_1, Sample_2, alternative = 'two.sided')  # 'two.sided', 'less', 'greater'
 
 ```
 
 ```{r}
+# Seleccionamos 2 muestras con reemplazo pero para zonas del país
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+# NOROESTE
+Sample_NO <- Gasolinerias_Precios %>%
+  filter(as.numeric(lat) > 28 & as.numeric(lng) < -104) %>%
+  pull(regular) %>%
+  na.omit()
 
-# Original Python code:
-
-# # Seleccionamos 2 muestras con remplazo pero para zonas del país
-
-# 
-
-# # NOROESTE
-
-# Sample_NO = Gasolinerias_Precios[(Gasolinerias_Precios['lat'].astype(float) > 28) & (Gasolinerias_Precios['lng'].astype(float) < -104)]['regular'].dropna()
-
-# Sample_NO.head()
+# Mostrar las primeras filas de la muestra
+head(Sample_NO)
 
 ```
 
 ```{r}
+# PENÍNSULA
+Sample_PE <- Gasolinerias_Precios %>%
+  filter(as.numeric(lng) > -91) %>%
+  pull(regular) %>%
+  na.omit()
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # PENÍNSULA
-
-# Sample_PE = Gasolinerias_Precios[Gasolinerias_Precios['lng'].astype(float) > -91]['regular'].dropna()
-
-# Sample_PE.head()
+# Mostrar las primeras filas de la muestra
+head(Sample_PE)
 
 ```
 
 ```{r}
+# Convertir a vectores numéricos si aún no lo son
+Sample_NO <- as.numeric(Sample_NO)
+Sample_PE <- as.numeric(Sample_PE)
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
-
-# Original Python code:
-
-# # Realizamos la prueba
-
-# 
-
-# st.ks_2samp(Sample_NO, Sample_PE, alternative = 'two-sided') # two-sided’, ‘less’, ‘greater’
-
+# Realizamos la prueba
+ks.test(Sample_NO, Sample_PE, alternative = 'two.sided')  # 'two.sided', 'less', 'greater'
 ```
 
 ```{r}
+# Datos
+Sample_NO <- data.frame( Sample_NO = Sample_NO )
+Sample_NO <- data.frame( X = density(Sample_NO$Sample_NO, bw = 0.1)$x,
+                         Y = density(Sample_NO$Sample_NO, bw = 0.1)$y )
 
-# The following Python code needs to be adapted to R or can be run as Python code using reticulate.
+Sample_PE <- data.frame( Sample_PE = Sample_PE )
+Sample_PE <- data.frame( X = density(Sample_PE$Sample_PE, bw = 0.1)$x,
+                         Y = density(Sample_PE$Sample_PE, bw = 0.1)$y )
 
-# Original Python code:
+# Crear la gráfica base
+p <- ggplot( data = Sample_NO ) +
+     geom_line(aes(x = X, y = Y), color = "darkblue") +
+     annotate("text", x = max(grid), y = max(Sample_NO$Y), label = "NO", 
+             size = 3, color = "darkblue") +
+     geom_line( data = Sample_PE, aes(x = X, y = Y), color = "darkred") +
+     annotate("text", x = max(grid), y = max(Sample_PE$Y), label = "PE", 
+             size = 3, color = "darkred") +
+  labs(title = paste('Gráfica de densidad de gasolina tipo', Combustible),
+       x = 'Precio MXN',
+       y = 'Probability Density') +
+  theme_minimal(base_size = 15)
 
-# 
+p
 
 ```
+
